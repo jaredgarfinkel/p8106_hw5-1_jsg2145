@@ -1,0 +1,54 @@
+---
+title: "p8106_hw5_jsg2145"
+author: "Jared Garfinkel"
+date: "5/9/2020"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ISLR)
+library(caret)
+library(e1071)
+library(mlbench)
+library(tidyverse)
+knitr::opts_chunk$set(
+	echo = TRUE,
+	warning = FALSE,
+	fig.width = 8, 
+  fig.height = 6,
+  out.width = "90%"
+)
+options(
+  ggplot2.continuous.colour = "viridis",
+  ggplot2.continuous.fill = "viridis"
+)
+scale_colour_discrete = scale_colour_viridis_d
+scale_fill_discrete = scale_fill_viridis_d
+theme_set(theme_minimal() + theme(legend.position = "bottom"))
+```
+
+```{r}
+data(OJ)
+df = OJ %>% 
+  janitor::clean_names() %>% 
+  mutate(id = row_number())
+
+set.seed(22)
+train = dplyr::sample_n(df, size = 800, replace = FALSE)
+test = df %>% 
+  anti_join(train, by = "id")
+```
+
+```{r, cache = TRUE}
+ctrl1 <- trainControl(method = "cv")
+set.seed(22)
+df_svml <- train(purchase ~ ., data = train,
+                 method = "svmLinear2",
+                 preProcess = c("center", "scale"),
+                 tuneGrid = data.frame(cost = exp(seq(-5, -1, len = 50))), 
+                 trControl = ctrl1)
+
+ggplot(df_svml, highlight = TRUE)
+```
+
