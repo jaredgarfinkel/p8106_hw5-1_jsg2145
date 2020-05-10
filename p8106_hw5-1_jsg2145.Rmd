@@ -6,12 +6,12 @@ output: github_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
 library(ISLR)
 library(caret)
 library(e1071)
 library(mlbench)
-library(tidyverse)
+library(kernlab)
 knitr::opts_chunk$set(
 	echo = TRUE,
 	warning = FALSE,
@@ -50,5 +50,67 @@ df_svml <- train(purchase ~ ., data = train,
                  trControl = ctrl1)
 
 ggplot(df_svml, highlight = TRUE)
+```
+
+```{r}
+#output
+df_svml$finalModel
+df_svml$bestTune
+```
+
+
+```{r}
+# training error rate
+pred_svml_train <- predict(df_svml)
+train_err = mean(pred_svml_train != train$purchase)
+# test error rate
+pred_svml_test <- predict(df_svml, newdata = test)
+test_err = mean(pred_svml_test != test$purchase)
+```
+
+The train error rate is `r train_err %>% round(3)` and the test error rate is `r test_err %>% round(3)`.
+
+## Part 1b
+
+```{r, cache = TRUE}
+svmr_grid = expand.grid(C = exp(seq(-5, 1, len = 20)),
+                         sigma = exp(seq(-5, 0, len = 10)))
+
+set.seed(22)
+df_svmr <- train(purchase~., 
+                 data = train,
+                 method = "svmRadial",
+                 preProcess = c("center", "scale"), 
+                 tuneGrid = svmr_grid,
+                 trControl = ctrl1)
+
+ggplot(df_svmr, highlight = TRUE)
+```
+
+```{r}
+#output
+df_svmr$finalModel
+df_svmr$bestTune
+```
+
+```{r}
+# train error rate
+pred_svmr_train = predict(df_svmr)
+train_err_svmr = mean(pred_svmr_train != train$purchase)
+
+#test error rate
+pred_svmr_test = predict(df_svmr, newdata = test, type = "raw")
+test_err_svmr = mean(pred_svmr_test != test$purchase)
+
+```
+
+The train error rate is `r train_err_svmr %>% round(3)`. The test error rate is `r test_err_svmr %>% round(3)`.
+
+
+## compare the models
+
+```{r}
+resamp <- resamples(list(svmr = df_svmr, svml = df_svml))
+bwplot(resamp)
 ```
 
